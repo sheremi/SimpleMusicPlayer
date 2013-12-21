@@ -40,21 +40,21 @@ public class MediaButtonIntentReceiver extends BroadcastReceiver {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MSG_LONGPRESS_TIMEOUT:
-                    if (!mLaunched) {
-                        Context context = (Context)msg.obj;
-                        Intent i = new Intent();
-                        i.putExtra("autoshuffle", "true");
-                        i.setClass(context, MusicBrowserActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        context.startActivity(i);
-                        mLaunched = true;
-                    }
-                    break;
+            case MSG_LONGPRESS_TIMEOUT:
+                if (!mLaunched) {
+                    Context context = (Context) msg.obj;
+                    Intent i = new Intent();
+                    i.putExtra("autoshuffle", "true");
+                    i.setClass(context, MusicBrowserActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    context.startActivity(i);
+                    mLaunched = true;
+                }
+                break;
             }
         }
     };
-    
+
     @Override
     public void onReceive(Context context, Intent intent) {
         String intentAction = intent.getAction();
@@ -64,66 +64,65 @@ public class MediaButtonIntentReceiver extends BroadcastReceiver {
             i.putExtra(MediaPlaybackService.CMDNAME, MediaPlaybackService.CMDPAUSE);
             context.startService(i);
         } else if (Intent.ACTION_MEDIA_BUTTON.equals(intentAction)) {
-            KeyEvent event = (KeyEvent)
-                    intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-            
-            if (event == null) {
-                return;
-            }
+            KeyEvent event = (KeyEvent) intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+
+            if (event == null) return;
 
             int keycode = event.getKeyCode();
             int action = event.getAction();
             long eventtime = event.getEventTime();
 
-            // single quick press: pause/resume. 
+            // single quick press: pause/resume.
             // double press: next track
             // long press: start auto-shuffle mode.
-            
+
             String command = null;
             switch (keycode) {
-                case KeyEvent.KEYCODE_MEDIA_STOP:
-                    command = MediaPlaybackService.CMDSTOP;
-                    break;
-                case KeyEvent.KEYCODE_HEADSETHOOK:
-                case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                    command = MediaPlaybackService.CMDTOGGLEPAUSE;
-                    break;
-                case KeyEvent.KEYCODE_MEDIA_NEXT:
-                    command = MediaPlaybackService.CMDNEXT;
-                    break;
-                case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-                    command = MediaPlaybackService.CMDPREVIOUS;
-                    break;
-                case KeyEvent.KEYCODE_MEDIA_PAUSE:
-                    command = MediaPlaybackService.CMDPAUSE;
-                    break;
-                case KeyEvent.KEYCODE_MEDIA_PLAY:
-                    command = MediaPlaybackService.CMDPLAY;
-                    break;
+            case KeyEvent.KEYCODE_MEDIA_STOP:
+                command = MediaPlaybackService.CMDSTOP;
+                break;
+            case KeyEvent.KEYCODE_HEADSETHOOK:
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                command = MediaPlaybackService.CMDTOGGLEPAUSE;
+                break;
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                command = MediaPlaybackService.CMDNEXT;
+                break;
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                command = MediaPlaybackService.CMDPREVIOUS;
+                break;
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                command = MediaPlaybackService.CMDPAUSE;
+                break;
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+                command = MediaPlaybackService.CMDPLAY;
+                break;
             }
 
             if (command != null) {
                 if (action == KeyEvent.ACTION_DOWN) {
                     if (mDown) {
-                        if ((MediaPlaybackService.CMDTOGGLEPAUSE.equals(command) ||
-                                MediaPlaybackService.CMDPLAY.equals(command))
-                                && mLastClickTime != 0 
+                        if ((MediaPlaybackService.CMDTOGGLEPAUSE.equals(command) || MediaPlaybackService.CMDPLAY
+                                .equals(command))
+                                && mLastClickTime != 0
                                 && eventtime - mLastClickTime > LONG_PRESS_DELAY) {
-                            mHandler.sendMessage(
-                                    mHandler.obtainMessage(MSG_LONGPRESS_TIMEOUT, context));
+                            mHandler.sendMessage(mHandler.obtainMessage(MSG_LONGPRESS_TIMEOUT, context));
                         }
                     } else if (event.getRepeatCount() == 0) {
-                        // only consider the first event in a sequence, not the repeat events,
-                        // so that we don't trigger in cases where the first event went to
-                        // a different app (e.g. when the user ends a phone call by
+                        // only consider the first event in a sequence, not the
+                        // repeat events,
+                        // so that we don't trigger in cases where the first
+                        // event went to
+                        // a different app (e.g. when the user ends a phone call
+                        // by
                         // long pressing the headset button)
 
-                        // The service may or may not be running, but we need to send it
+                        // The service may or may not be running, but we need to
+                        // send it
                         // a command.
                         Intent i = new Intent(context, MediaPlaybackService.class);
                         i.setAction(MediaPlaybackService.SERVICECMD);
-                        if (keycode == KeyEvent.KEYCODE_HEADSETHOOK &&
-                                eventtime - mLastClickTime < 300) {
+                        if (keycode == KeyEvent.KEYCODE_HEADSETHOOK && eventtime - mLastClickTime < 300) {
                             i.putExtra(MediaPlaybackService.CMDNAME, MediaPlaybackService.CMDNEXT);
                             context.startService(i);
                             mLastClickTime = 0;

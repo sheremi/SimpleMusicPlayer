@@ -25,18 +25,19 @@ import android.database.Cursor;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Audio.PlaylistsColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-public class CreatePlaylist extends Activity
-{
+public class CreatePlaylist extends Activity {
     private EditText mPlaylist;
     private TextView mPrompt;
     private Button mSaveButton;
@@ -48,20 +49,20 @@ public class CreatePlaylist extends Activity
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.create_playlist);
-        getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT,
-                                    WindowManager.LayoutParams.WRAP_CONTENT);
+        getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 
-        mPrompt = (TextView)findViewById(R.id.prompt);
-        mPlaylist = (EditText)findViewById(R.id.playlist);
+        mPrompt = (TextView) findViewById(R.id.prompt);
+        mPlaylist = (EditText) findViewById(R.id.playlist);
         mSaveButton = (Button) findViewById(R.id.create);
         mSaveButton.setOnClickListener(mOpenClicked);
 
-        ((Button)findViewById(R.id.cancel)).setOnClickListener(new View.OnClickListener() {
+        ((Button) findViewById(R.id.cancel)).setOnClickListener(new View.OnClickListener() {
+            @Override
             public void onClick(View v) {
                 finish();
             }
         });
-        
+
         String defaultname = icicle != null ? icicle.getString("defaultname") : makePlaylistName();
         if (defaultname == null) {
             finish();
@@ -74,18 +75,22 @@ public class CreatePlaylist extends Activity
         mPlaylist.setSelection(defaultname.length());
         mPlaylist.addTextChangedListener(mTextWatcher);
     }
-    
+
     TextWatcher mTextWatcher = new TextWatcher() {
+        @Override
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             // don't care about this one
         }
+
+        @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
             String newText = mPlaylist.getText().toString();
             if (newText.trim().length() == 0) {
                 mSaveButton.setEnabled(false);
             } else {
                 mSaveButton.setEnabled(true);
-                // check if playlist with current name exists already, and warn the user if so.
+                // check if playlist with current name exists already, and warn
+                // the user if so.
                 if (idForplaylist(newText) >= 0) {
                     mSaveButton.setText(R.string.create_playlist_overwrite_text);
                 } else {
@@ -93,17 +98,17 @@ public class CreatePlaylist extends Activity
                 }
             }
         };
+
+        @Override
         public void afterTextChanged(Editable s) {
             // don't care about this one
         }
     };
-    
+
     private int idForplaylist(String name) {
         Cursor c = MusicUtils.query(this, MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                new String[] { MediaStore.Audio.Playlists._ID },
-                MediaStore.Audio.Playlists.NAME + "=?",
-                new String[] { name },
-                MediaStore.Audio.Playlists.NAME);
+                new String[] { BaseColumns._ID }, PlaylistsColumns.NAME + "=?", new String[] { name },
+                PlaylistsColumns.NAME);
         int id = -1;
         if (c != null) {
             c.moveToFirst();
@@ -114,12 +119,12 @@ public class CreatePlaylist extends Activity
         }
         return id;
     }
-    
+
     @Override
     public void onSaveInstanceState(Bundle outcicle) {
         outcicle.putString("defaultname", mPlaylist.getText().toString());
     }
-    
+
     @Override
     public void onResume() {
         super.onResume();
@@ -130,32 +135,30 @@ public class CreatePlaylist extends Activity
         String template = getString(R.string.new_playlist_name_template);
         int num = 1;
 
-        String[] cols = new String[] {
-                MediaStore.Audio.Playlists.NAME
-        };
+        String[] cols = new String[] { PlaylistsColumns.NAME };
         ContentResolver resolver = getContentResolver();
-        String whereclause = MediaStore.Audio.Playlists.NAME + " != ''";
-        Cursor c = resolver.query(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-            cols, whereclause, null,
-            MediaStore.Audio.Playlists.NAME);
+        String whereclause = PlaylistsColumns.NAME + " != ''";
+        Cursor c = resolver.query(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI, cols, whereclause, null,
+                PlaylistsColumns.NAME);
 
-        if (c == null) {
-            return null;
-        }
-        
+        if (c == null) return null;
+
         String suggestedname;
         suggestedname = String.format(template, num++);
-        
-        // Need to loop until we've made 1 full pass through without finding a match.
-        // Looping more than once shouldn't happen very often, but will happen if
+
+        // Need to loop until we've made 1 full pass through without finding a
+        // match.
+        // Looping more than once shouldn't happen very often, but will happen
+        // if
         // you have playlists named "New Playlist 1"/10/2/3/4/5/6/7/8/9, where
-        // making only one pass would result in "New Playlist 10" being erroneously
+        // making only one pass would result in "New Playlist 10" being
+        // erroneously
         // picked for the new name.
         boolean done = false;
         while (!done) {
             done = true;
             c.moveToFirst();
-            while (! c.isAfterLast()) {
+            while (!c.isAfterLast()) {
                 String playlistname = c.getString(0);
                 if (playlistname.compareToIgnoreCase(suggestedname) == 0) {
                     suggestedname = String.format(template, num++);
@@ -167,8 +170,9 @@ public class CreatePlaylist extends Activity
         c.close();
         return suggestedname;
     }
-    
+
     private View.OnClickListener mOpenClicked = new View.OnClickListener() {
+        @Override
         public void onClick(View v) {
             String name = mPlaylist.getText().toString();
             if (name != null && name.length() > 0) {
@@ -180,10 +184,10 @@ public class CreatePlaylist extends Activity
                     MusicUtils.clearPlaylist(CreatePlaylist.this, id);
                 } else {
                     ContentValues values = new ContentValues(1);
-                    values.put(MediaStore.Audio.Playlists.NAME, name);
+                    values.put(PlaylistsColumns.NAME, name);
                     uri = resolver.insert(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI, values);
                 }
-                setResult(RESULT_OK, (new Intent()).setData(uri));
+                setResult(RESULT_OK, new Intent().setData(uri));
                 finish();
             }
         }
