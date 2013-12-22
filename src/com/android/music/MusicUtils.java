@@ -186,6 +186,18 @@ public class MusicUtils {
         return null;
     }
 
+    public static ServiceToken bindToService(Context context, ServiceConnection callback) {
+        ContextWrapper cw = new ContextWrapper(context);
+        cw.startService(new Intent(cw, MediaPlaybackService.class));
+        ServiceBinder sb = new ServiceBinder(callback);
+        if (cw.bindService(new Intent().setClass(cw, MediaPlaybackService.class), sb, 0)) {
+            sConnectionMap.put(cw, sb);
+            return new ServiceToken(cw);
+        }
+        Log.e("Music", "Failed to bind to service");
+        return null;
+    }
+
     public static void unbindFromService(ServiceToken token) {
         if (token == null) {
             Log.e("MusicUtils", "Trying to unbind with null token");
@@ -830,7 +842,7 @@ public class MusicUtils {
     // A really simple BitmapDrawable-like class, that doesn't do
     // scaling, dithering or filtering.
     private static class FastBitmapDrawable extends Drawable {
-        private Bitmap mBitmap;
+        private final Bitmap mBitmap;
 
         public FastBitmapDrawable(Bitmap b) {
             mBitmap = b;
@@ -1085,19 +1097,19 @@ public class MusicUtils {
                 opts);
     }
 
-    static int getIntPref(Context context, String name, int def) {
+    public static int getIntPref(Context context, String name, int def) {
         SharedPreferences prefs = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
         return prefs.getInt(name, def);
     }
 
-    static void setIntPref(Context context, String name, int value) {
+    public static void setIntPref(Context context, String name, int value) {
         SharedPreferences prefs = context.getSharedPreferences(context.getPackageName(), Context.MODE_PRIVATE);
         Editor ed = prefs.edit();
         ed.putInt(name, value);
         SharedPreferencesCompat.apply(ed);
     }
 
-    static void setRingtone(Context context, long id) {
+    public static void setRingtone(Context context, long id) {
         ContentResolver resolver = context.getContentResolver();
         // Set the flag in the database to mark this as a ringtone
         Uri ringUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id);
@@ -1131,9 +1143,9 @@ public class MusicUtils {
         }
     }
 
-    static int sActiveTabIndex = -1;
+    public static int sActiveTabIndex = -1;
 
-    static boolean updateButtonBar(Activity a, int highlight) {
+    public static boolean updateButtonBar(Activity a, int highlight) {
         final TabWidget ll = (TabWidget) a.findViewById(R.id.buttonbar);
         boolean withtabs = false;
         Intent intent = a.getIntent();
@@ -1183,7 +1195,7 @@ public class MusicUtils {
         return withtabs;
     }
 
-    static void processTabClick(Activity a, View v, int current) {
+    public static void processTabClick(Activity a, View v, int current) {
         int id = v.getId();
         if (id == current) return;
 
@@ -1196,7 +1208,7 @@ public class MusicUtils {
         }
     }
 
-    static void activateTab(Activity a, int id) {
+    public static void activateTab(Activity a, int id) {
         Intent intent = new Intent(Intent.ACTION_PICK);
         switch (id) {
         case R.id.artisttab:
@@ -1225,7 +1237,7 @@ public class MusicUtils {
         a.overridePendingTransition(0, 0);
     }
 
-    static void updateNowPlaying(Activity a) {
+    public static void updateNowPlaying(Activity a) {
         View nowPlayingView = a.findViewById(R.id.nowplaying);
         if (nowPlayingView == null) return;
         try {
@@ -1261,7 +1273,7 @@ public class MusicUtils {
         nowPlayingView.setVisibility(View.GONE);
     }
 
-    static void setBackground(View v, Bitmap bm) {
+    public static void setBackground(View v, Bitmap bm) {
 
         if (bm == null) {
             v.setBackgroundResource(0);
@@ -1300,7 +1312,7 @@ public class MusicUtils {
         v.setBackgroundDrawable(new BitmapDrawable(bg));
     }
 
-    static int getCardId(Context context) {
+    public static int getCardId(Context context) {
         ContentResolver res = context.getContentResolver();
         Cursor c = res.query(Uri.parse("content://media/external/fs_id"), null, null, null, null);
         int id = -1;
@@ -1312,7 +1324,7 @@ public class MusicUtils {
         return id;
     }
 
-    static class LogEntry {
+    public static class LogEntry {
         Object item;
         long time;
 
@@ -1336,7 +1348,7 @@ public class MusicUtils {
     private static int sLogPtr = 0;
     private static Time sTime = new Time();
 
-    static void debugLog(Object o) {
+    public static void debugLog(Object o) {
 
         sMusicLog[sLogPtr] = new LogEntry(o);
         sLogPtr++;
@@ -1345,7 +1357,7 @@ public class MusicUtils {
         }
     }
 
-    static void debugDump(PrintWriter out) {
+    public static void debugDump(PrintWriter out) {
         for (int i = 0; i < sMusicLog.length; i++) {
             int idx = sLogPtr + i;
             if (idx >= sMusicLog.length) {
