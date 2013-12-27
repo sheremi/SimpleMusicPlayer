@@ -554,7 +554,7 @@ public class PlayerService extends Service {
                     albumName = getString(R.string.unknown_album_name);
                     albumid = -1;
                 }
-                trackInfoChanged.artistName = artistName;
+                trackInfoChanged.albumName = albumName;
                 trackInfoChanged.trackName = mService.getTrackName();
                 mAlbumArtHandler.removeMessages(GET_ALBUM_ART);
                 mAlbumArtHandler.obtainMessage(GET_ALBUM_ART, new AlbumSongIdWrapper(albumid, songid)).sendToTarget();
