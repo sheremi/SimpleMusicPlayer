@@ -49,12 +49,16 @@
         </activity>
         <service android:name=".simple.model.PlayerService"
             android:exported="false" />
-        <receiver android:name="com.android.music.MediaButtonIntentReceiver">
+        <receiver android:name="com.android.music.simple.remote.MediaButtonIntentReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
+        <service android:name=".simple.remote.RemoteControlService" android:exported="false" />
+
+        <!-- ############################################################################## -->
+
         <!-- This is the "current music playing" panel, which has special
              launch behavior.  We clear its task affinity, so it will not
              be associated with the main media task and if launched

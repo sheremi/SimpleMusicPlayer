@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.music;
+package com.android.music.simple.remote;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -24,8 +24,12 @@ import android.os.Handler;
 import android.os.Message;
 import android.view.KeyEvent;
 
+import com.android.music.MediaPlaybackService;
+import com.android.music.MusicBrowserActivity;
+import com.android.music.simple.model.IPlayer;
+
 /**
- * 
+ * TODO use {@link IPlayer}
  */
 public class MediaButtonIntentReceiver extends BroadcastReceiver {
 
