@@ -23,6 +23,7 @@ import java.lang.ref.WeakReference;
 import java.util.Random;
 import java.util.Vector;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -36,10 +37,13 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
+import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.RemoteControlClient;
+import android.media.RemoteControlClient.MetadataEditor;
 import android.media.audiofx.AudioEffect;
 import android.net.Uri;
 import android.os.Handler;
@@ -54,6 +58,8 @@ import android.provider.MediaStore.Audio.AudioColumns;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.android.music.simple.presentation.NowPlayingActivity;
 
 /**
  * Provides "background" audio playback capabilities, allowing the user to
@@ -295,19 +301,26 @@ public class MediaPlaybackService extends Service {
         super.onCreate();
 
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        ComponentName rec = new ComponentName(getPackageName(), MediaButtonIntentReceiver.class.getName());
-        mAudioManager.registerMediaButtonEventReceiver(rec);
-        // TODO update to new constructor
-        // mRemoteControlClient = new RemoteControlClient(rec);
-        // mAudioManager.registerRemoteControlClient(mRemoteControlClient);
-        //
-        // int flags = RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS
-        // | RemoteControlClient.FLAG_KEY_MEDIA_NEXT
-        // | RemoteControlClient.FLAG_KEY_MEDIA_PLAY
-        // | RemoteControlClient.FLAG_KEY_MEDIA_PAUSE
-        // | RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE
-        // | RemoteControlClient.FLAG_KEY_MEDIA_STOP;
-        // mRemoteControlClient.setTransportControlFlags(flags);
+        ComponentName myEventReceiver = new ComponentName(getPackageName(), MediaButtonIntentReceiver.class.getName());
+        mAudioManager.registerMediaButtonEventReceiver(myEventReceiver);
+
+        Intent intent = new Intent(this, NowPlayingActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(this, 0, intent, 0);
+
+        AudioManager myAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        myAudioManager.registerMediaButtonEventReceiver(myEventReceiver);
+        // build the PendingIntent for the remote control client
+        Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        mediaButtonIntent.setComponent(myEventReceiver);
+        PendingIntent mediaPendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0, mediaButtonIntent, 0);
+        // create and register the remote control client
+        mRemoteControlClient = new RemoteControlClient(mediaPendingIntent);
+        myAudioManager.registerRemoteControlClient(mRemoteControlClient);
+
+        int flags = RemoteControlClient.FLAG_KEY_MEDIA_PREVIOUS | RemoteControlClient.FLAG_KEY_MEDIA_NEXT
+                | RemoteControlClient.FLAG_KEY_MEDIA_PLAY | RemoteControlClient.FLAG_KEY_MEDIA_PAUSE
+                | RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE | RemoteControlClient.FLAG_KEY_MEDIA_STOP;
+        mRemoteControlClient.setTransportControlFlags(flags);
 
         mPreferences = getSharedPreferences("Music", MODE_WORLD_READABLE | MODE_WORLD_WRITEABLE);
         mCardId = MusicUtils.getCardId(this);
@@ -359,7 +372,7 @@ public class MediaPlaybackService extends Service {
         mPlayer = null;
 
         mAudioManager.abandonAudioFocus(mAudioFocusListener);
-        // mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
+        mAudioManager.unregisterRemoteControlClient(mRemoteControlClient);
 
         // make sure there aren't any other messages coming
         mDelayedStopHandler.removeCallbacksAndMessages(null);
@@ -771,26 +784,19 @@ public class MediaPlaybackService extends Service {
         sendStickyBroadcast(i);
 
         if (what.equals(PLAYSTATE_CHANGED)) {
-            // mRemoteControlClient.setPlaybackState(isPlaying() ?
-            // RemoteControlClient.PLAYSTATE_PLAYING :
-            // RemoteControlClient.PLAYSTATE_PAUSED);
+            mRemoteControlClient.setPlaybackState(isPlaying() ? RemoteControlClient.PLAYSTATE_PLAYING
+                    : RemoteControlClient.PLAYSTATE_PAUSED);
         } else if (what.equals(META_CHANGED)) {
-            // RemoteControlClient.MetadataEditor ed =
-            // mRemoteControlClient.editMetadata(true);
-            // ed.putString(MediaMetadataRetriever.METADATA_KEY_TITLE,
-            // getTrackName());
-            // ed.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM,
-            // getAlbumName());
-            // ed.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST,
-            // getArtistName());
-            // ed.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION,
-            // duration());
-            // Bitmap b = MusicUtils.getArtwork(this, getAudioId(),
-            // getAlbumId(), false);
-            // if (b != null) {
-            // ed.putBitmap(MetadataEditor.BITMAP_KEY_ARTWORK, b);
-            // }
-            // ed.apply();
+            RemoteControlClient.MetadataEditor ed = mRemoteControlClient.editMetadata(true);
+            ed.putString(MediaMetadataRetriever.METADATA_KEY_TITLE, getTrackName());
+            ed.putString(MediaMetadataRetriever.METADATA_KEY_ALBUM, getAlbumName());
+            ed.putString(MediaMetadataRetriever.METADATA_KEY_ARTIST, getArtistName());
+            ed.putLong(MediaMetadataRetriever.METADATA_KEY_DURATION, duration());
+            Bitmap b = MusicUtils.getArtwork(this, getAudioId(), getAlbumId(), false);
+            if (b != null) {
+                ed.putBitmap(MetadataEditor.BITMAP_KEY_ARTWORK, b);
+            }
+            ed.apply();
         }
 
         if (what.equals(QUEUE_CHANGED)) {
