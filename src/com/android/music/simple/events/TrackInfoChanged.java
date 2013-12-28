@@ -8,5 +8,8 @@ public class TrackInfoChanged extends ReflectionParcelableEvent {
     public String artistName;
     public String albumName;
     public String durationAsText;
+    public boolean isArtistNameAvailable;
+    public boolean isAlbumNameAvailable;
+    public boolean isAlbumArtAvailable;
 
 }
