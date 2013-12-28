@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -159,6 +160,11 @@ public class PlayerService extends Service {
             public void togglePartyShuffle() {
                 MusicUtils.togglePartyShuffle();
             }
+
+            @Override
+            public void seek(int progress) {
+                PlayerService.this.seek(progress);
+            }
         });
 
         // TODO setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -285,6 +291,25 @@ public class PlayerService extends Service {
                 refreshNow();
             }
         } catch (RemoteException ex) {
+        }
+    }
+
+    private void seek(int progress) {
+        if (mService == null) return;
+        long now = SystemClock.elapsedRealtime();
+        if (now - mLastSeekEventTime > 250) {
+            mLastSeekEventTime = now;
+            mPosOverride = mDuration * progress / 1000;
+            try {
+                mService.seek(mPosOverride);
+            } catch (RemoteException ex) {
+            }
+
+            // trackball event, allow progress updates
+            if (!mFromTouch) {
+                refreshNow();
+                mPosOverride = -1;
+            }
         }
     }
 
@@ -554,7 +579,7 @@ public class PlayerService extends Service {
                     albumName = getString(R.string.unknown_album_name);
                     albumid = -1;
                 }
-                trackInfoChanged.artistName = artistName;
+                trackInfoChanged.albumName = albumName;
                 trackInfoChanged.trackName = mService.getTrackName();
                 mAlbumArtHandler.removeMessages(GET_ALBUM_ART);
                 mAlbumArtHandler.obtainMessage(GET_ALBUM_ART, new AlbumSongIdWrapper(albumid, songid)).sendToTarget();

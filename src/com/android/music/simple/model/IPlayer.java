@@ -25,4 +25,6 @@ public interface IPlayer {
     void scanForward(int repcnt, long delta);
 
     void scanBackward(int repcnt, long delta);
+
+    void seek(int progress);
 }

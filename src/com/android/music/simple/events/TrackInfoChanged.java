@@ -6,6 +6,7 @@ public class TrackInfoChanged extends ReflectionParcelableEvent {
 
     public String trackName;
     public String artistName;
+    public String albumName;
     public String durationAsText;
 
 }
