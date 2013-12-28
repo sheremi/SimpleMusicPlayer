@@ -4,6 +4,9 @@ import android.app.Application;
 import android.content.Intent;
 
 import com.android.music.simple.model.PlayerService;
+import com.android.music.simple.presentation.NotificationPresenter;
+import com.android.music.simple.presentation.WidgetPresenter;
+import com.android.music.simple.remote.RemoteControlService;
 import com.github.androidutils.logger.LogcatLogWriterWithLines;
 import com.github.androidutils.logger.Logger;
 
@@ -12,6 +15,8 @@ public class PlayerApplication extends Application {
     public void onCreate() {
         Logger.getDefaultLogger().addLogWriter(LogcatLogWriterWithLines.getInstance());
         startService(new Intent(getApplicationContext(), PlayerService.class));
-        // TODO start other services OR register their receivers in manifest
+        startService(new Intent(getApplicationContext(), RemoteControlService.class));
+        startService(new Intent(getApplicationContext(), NotificationPresenter.class));
+        startService(new Intent(getApplicationContext(), WidgetPresenter.class));
     }
 }

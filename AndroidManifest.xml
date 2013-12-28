@@ -18,7 +18,7 @@
         package="com.android.music">
 
     <original-package android:name="com.android.music" />
-    <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="9"/>
+    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="14"/>
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -49,12 +49,18 @@
         </activity>
         <service android:name=".simple.model.PlayerService"
             android:exported="false" />
-        <receiver android:name="com.android.music.MediaButtonIntentReceiver">
+        <receiver android:name="com.android.music.simple.remote.MediaButtonIntentReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
+        <service android:name=".simple.remote.RemoteControlService" android:exported="false" />
+        <service android:name=".simple.presentation.NotificationPresenter" android:exported="false" />
+        <service android:name=".simple.presentation.WidgetPresenter" android:exported="false" />
+
+        <!-- ############################################################################## -->
+
         <!-- This is the "current music playing" panel, which has special
              launch behavior.  We clear its task affinity, so it will not
              be associated with the main media task and if launched

@@ -36,6 +36,11 @@ public class WidgetPresenter extends Service {
     };
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
     public IBinder onBind(Intent arg0) {
         return null;
     }

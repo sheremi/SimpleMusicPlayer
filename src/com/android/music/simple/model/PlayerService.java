@@ -24,7 +24,10 @@ import com.android.music.MusicUtils.Defs;
 import com.android.music.MusicUtils.ServiceToken;
 import com.android.music.R;
 import com.android.music.simple.events.AlbumArtDecoded;
+import com.android.music.simple.events.PlaybackStatusChanged;
 import com.android.music.simple.events.PlaypositionChanged;
+import com.android.music.simple.events.RepeatChanged;
+import com.android.music.simple.events.ShuffleChanged;
 import com.android.music.simple.events.TrackInfoChanged;
 import com.github.androidutils.eventbus.IEventBus;
 import com.github.androidutils.eventbus.IntentEventBus;
@@ -192,9 +195,6 @@ public class PlayerService extends Service {
         f.addAction(MediaPlaybackService.PLAYSTATE_CHANGED);
         f.addAction(MediaPlaybackService.META_CHANGED);
         registerReceiver(mStatusListener, new IntentFilter(f));
-        // TODO updateTrackInfo();
-        // TODO long next = refreshNow();
-        // TODO queueNextRefresh(next);
     }
 
     @Override
@@ -389,10 +389,12 @@ public class PlayerService extends Service {
         public void onServiceConnected(ComponentName classname, IBinder obj) {
             mService = IMediaPlaybackService.Stub.asInterface(obj);
             try {
-                // Assume something is playing when the service says it is,
-                // but also if the audio ID is valid but the service is paused.
-                // something is playing now, we're done
-                // TODO send some updates
+                setRepeatButtonImage();
+                setPauseButtonImage();
+                setShuffleButtonImage();
+                long next = refreshNow();
+                queueNextRefresh(next);
+
                 if (mService.getAudioId() >= 0 || mService.isPlaying() || mService.getPath() != null) return;
             } catch (RemoteException ex) {
             }
@@ -410,17 +412,19 @@ public class PlayerService extends Service {
     private void setRepeatButtonImage() {
         if (mService == null) return;
         try {
+            RepeatChanged repeatChanged = new RepeatChanged();
             switch (mService.getRepeatMode()) {
             case MediaPlaybackService.REPEAT_ALL:
-                // TODO
+                repeatChanged.repeat = RepeatChanged.REPEAT_ALL;
                 break;
             case MediaPlaybackService.REPEAT_CURRENT:
-                // TODO
+                repeatChanged.repeat = RepeatChanged.REPEAT_CURRENT;
                 break;
             default:
-                // TODO
+                repeatChanged.repeat = RepeatChanged.REPEAT_NONE;
                 break;
             }
+            eventBus.post(repeatChanged);
         } catch (RemoteException ex) {
         }
     }
@@ -428,29 +432,28 @@ public class PlayerService extends Service {
     private void setShuffleButtonImage() {
         if (mService == null) return;
         try {
+            ShuffleChanged shuffleChanged = new ShuffleChanged();
             switch (mService.getShuffleMode()) {
             case MediaPlaybackService.SHUFFLE_NONE:
-                // TODO
+                shuffleChanged.shuffle = ShuffleChanged.SHUFFLE_NONE;
                 break;
             case MediaPlaybackService.SHUFFLE_AUTO:
-                // TODO
+                shuffleChanged.shuffle = ShuffleChanged.SHUFFLE_AUTO;
                 break;
             default:
-                // TODO
+                shuffleChanged.shuffle = ShuffleChanged.SHUFFLE_NORMAL;
                 break;
             }
+            eventBus.post(shuffleChanged);
         } catch (RemoteException ex) {
         }
     }
 
     private void setPauseButtonImage() {
         try {
-
-            if (mService != null && mService.isPlaying()) {
-                // TODO
-            } else {
-                // TODO
-            }
+            PlaybackStatusChanged event = new PlaybackStatusChanged();
+            event.isPlaying = mService != null && mService.isPlaying();
+            eventBus.post(event);
         } catch (RemoteException ex) {
         }
     }
@@ -560,19 +563,15 @@ public class PlayerService extends Service {
             if (songid < 0 && path.toLowerCase().startsWith("http://")) {
                 // Once we can get album art and meta data from MediaPlayer, we
                 // can show that info again when streaming.
-                // TODO ((View)
-                // mArtistName.getParent()).setVisibility(View.INVISIBLE);
-                // TODO ((View)
-                // mAlbumName.getParent()).setVisibility(View.INVISIBLE);
-                // TODO mAlbum.setVisibility(View.GONE);
+                trackInfoChanged.isArtistNameAvailable = false;
+                trackInfoChanged.isAlbumNameAvailable = false;
+                trackInfoChanged.isAlbumArtAvailable = false;
                 trackInfoChanged.trackName = path;
                 mAlbumArtHandler.removeMessages(GET_ALBUM_ART);
                 mAlbumArtHandler.obtainMessage(GET_ALBUM_ART, new AlbumSongIdWrapper(-1, -1)).sendToTarget();
             } else {
-                // TOD((View)
-                // mArtistName.getParent()).setVisibility(View.VISIBLE);
-                // TODO ((View)
-                // mAlbumName.getParent()).setVisibility(View.VISIBLE);
+                trackInfoChanged.isArtistNameAvailable = true;
+                trackInfoChanged.isAlbumNameAvailable = true;
                 String artistName = mService.getArtistName();
                 if (MediaStore.UNKNOWN_STRING.equals(artistName)) {
                     artistName = getString(R.string.unknown_artist_name);
@@ -588,7 +587,7 @@ public class PlayerService extends Service {
                 trackInfoChanged.trackName = mService.getTrackName();
                 mAlbumArtHandler.removeMessages(GET_ALBUM_ART);
                 mAlbumArtHandler.obtainMessage(GET_ALBUM_ART, new AlbumSongIdWrapper(albumid, songid)).sendToTarget();
-                // TODO mAlbum.setVisibility(View.VISIBLE);
+                trackInfoChanged.isAlbumArtAvailable = true;
             }
             mDuration = mService.duration();
             trackInfoChanged.durationAsText = MusicUtils.makeTimeString(this, mDuration / 1000);
