@@ -69,6 +69,11 @@ public class PlayerProxy implements IPlayer {
         realPlayer.skipBackwards();
     }
 
+    @Override
+    public void startPlayback() {
+        realPlayer.startPlayback();
+    }
+
     public PlayerProxy() {
         realPlayer = new NullPlayer();
     }

@@ -48,4 +48,8 @@ final class NullPlayer implements IPlayer {
     @Override
     public void scanBackward(int repcnt, long delta) {
     }
+
+    @Override
+    public void startPlayback() {
+    }
 }
