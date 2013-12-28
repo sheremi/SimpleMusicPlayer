@@ -74,6 +74,11 @@ public class PlayerProxy implements IPlayer {
         realPlayer.seek(progress);
     }
 
+    @Override
+    public void startPlayback() {
+        realPlayer.startPlayback();
+    }
+
     public PlayerProxy() {
         realPlayer = new NullPlayer();
     }

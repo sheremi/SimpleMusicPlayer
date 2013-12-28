@@ -23,10 +23,7 @@ import java.lang.ref.WeakReference;
 import java.util.Random;
 import java.util.Vector;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -56,7 +53,6 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.AudioColumns;
 import android.provider.MediaStore.MediaColumns;
 import android.util.Log;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
 /**
@@ -116,7 +112,7 @@ public class MediaPlaybackService extends Service {
     private long[] mAutoShuffleList = null;
     private long[] mPlayList = null;
     private int mPlayListLen = 0;
-    private Vector<Integer> mHistory = new Vector<Integer>(MAX_HISTORY_SIZE);
+    private final Vector<Integer> mHistory = new Vector<Integer>(MAX_HISTORY_SIZE);
     private Cursor mCursor;
     private int mPlayPos = -1;
     private static final String LOGTAG = "MediaPlaybackService";
@@ -155,14 +151,12 @@ public class MediaPlaybackService extends Service {
     // cards.
     private int mCardId;
 
-    private MediaAppWidgetProvider mAppWidgetProvider = MediaAppWidgetProvider.getInstance();
-
     // interval after which we stop the service when idle
     private static final int IDLE_DELAY = 60000;
 
     private RemoteControlClient mRemoteControlClient;
 
-    private Handler mMediaplayerHandler = new Handler() {
+    private final Handler mMediaplayerHandler = new Handler() {
         float mCurrentVolume = 1.0f;
 
         @Override
@@ -256,7 +250,7 @@ public class MediaPlaybackService extends Service {
         }
     };
 
-    private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -282,17 +276,11 @@ public class MediaPlaybackService extends Service {
                 pause();
                 mPausedByTransientLossOfFocus = false;
                 seek(0);
-            } else if (MediaAppWidgetProvider.CMDAPPWIDGETUPDATE.equals(cmd)) {
-                // Someone asked us to refresh a set of specific widgets,
-                // probably
-                // because they were just added.
-                int[] appWidgetIds = intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS);
-                mAppWidgetProvider.performUpdate(MediaPlaybackService.this, appWidgetIds);
             }
         }
     };
 
-    private OnAudioFocusChangeListener mAudioFocusListener = new OnAudioFocusChangeListener() {
+    private final OnAudioFocusChangeListener mAudioFocusListener = new OnAudioFocusChangeListener() {
         @Override
         public void onAudioFocusChange(int focusChange) {
             mMediaplayerHandler.obtainMessage(FOCUSCHANGE, focusChange, 0).sendToTarget();
@@ -698,7 +686,7 @@ public class MediaPlaybackService extends Service {
         return true;
     }
 
-    private Handler mDelayedStopHandler = new Handler() {
+    private final Handler mDelayedStopHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             // Check again to make sure nothing is playing right now
@@ -810,9 +798,6 @@ public class MediaPlaybackService extends Service {
         } else {
             saveQueue(false);
         }
-
-        // Share this notification directly with our widgets
-        mAppWidgetProvider.notifyChange(this, what);
     }
 
     private void ensurePlayListCapacity(int size) {
@@ -1119,33 +1104,6 @@ public class MediaPlaybackService extends Service {
             mMediaplayerHandler.removeMessages(FADEDOWN);
             mMediaplayerHandler.sendEmptyMessage(FADEUP);
 
-            RemoteViews views = new RemoteViews(getPackageName(), R.layout.statusbar);
-            views.setImageViewResource(R.id.icon, R.drawable.stat_notify_musicplayer);
-            if (getAudioId() < 0) {
-                // streaming
-                views.setTextViewText(R.id.trackname, getPath());
-                views.setTextViewText(R.id.artistalbum, null);
-            } else {
-                String artist = getArtistName();
-                views.setTextViewText(R.id.trackname, getTrackName());
-                if (artist == null || artist.equals(MediaStore.UNKNOWN_STRING)) {
-                    artist = getString(R.string.unknown_artist_name);
-                }
-                String album = getAlbumName();
-                if (album == null || album.equals(MediaStore.UNKNOWN_STRING)) {
-                    album = getString(R.string.unknown_album_name);
-                }
-
-                views.setTextViewText(R.id.artistalbum, getString(R.string.notification_artist_album, artist, album));
-            }
-
-            Notification status = new Notification();
-            status.contentView = views;
-            status.flags |= Notification.FLAG_ONGOING_EVENT;
-            status.icon = R.drawable.stat_notify_musicplayer;
-            status.contentIntent = PendingIntent.getActivity(this, 0,
-                    new Intent("com.android.music.PLAYBACK_VIEWER").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), 0);
-            startForeground(PLAYBACKSERVICE_STATUS, status);
             if (!mIsSupposedToBePlaying) {
                 mIsSupposedToBePlaying = true;
                 notifyChange(PLAYSTATE_CHANGED);
@@ -1457,7 +1415,7 @@ public class MediaPlaybackService extends Service {
     // previously, unless the interval is 1.
     private static class Shuffler {
         private int mPrevious;
-        private Random mRandom = new Random();
+        private final Random mRandom = new Random();
 
         public int nextInt(int interval) {
             int ret;

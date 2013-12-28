@@ -27,4 +27,6 @@ public interface IPlayer {
     void scanBackward(int repcnt, long delta);
 
     void seek(int progress);
+
+    void startPlayback();
 }

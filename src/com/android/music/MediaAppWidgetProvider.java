@@ -17,6 +17,7 @@
 package com.android.music;
 
 import android.app.PendingIntent;
+import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
@@ -38,7 +39,7 @@ public class MediaAppWidgetProvider extends AppWidgetProvider {
 
     private static MediaAppWidgetProvider sInstance;
 
-    static synchronized MediaAppWidgetProvider getInstance() {
+    public static synchronized MediaAppWidgetProvider getInstance() {
         if (sInstance == null) {
             sInstance = new MediaAppWidgetProvider();
         }
@@ -95,26 +96,20 @@ public class MediaAppWidgetProvider extends AppWidgetProvider {
     }
 
     /**
-     * Handle a change notification coming over from
-     * {@link MediaPlaybackService}
-     */
-    void notifyChange(MediaPlaybackService service, String what) {
-        if (hasInstances(service)) {
-            if (MediaPlaybackService.META_CHANGED.equals(what) || MediaPlaybackService.PLAYSTATE_CHANGED.equals(what)) {
-                performUpdate(service, null);
-            }
-        }
-    }
-
-    /**
      * Update all active widget instances by pushing changes
+     * 
+     * @param pArtistName
+     * @param playing
+     * @param trackName
      */
-    void performUpdate(MediaPlaybackService service, int[] appWidgetIds) {
+    public void performUpdate(Service service, int[] appWidgetIds, String pTrackName, String pArtistName,
+            boolean playing) {
+        // TODO if (hasInstances(service)) {
         final Resources res = service.getResources();
         final RemoteViews views = new RemoteViews(service.getPackageName(), R.layout.album_appwidget);
 
-        CharSequence titleName = service.getTrackName();
-        CharSequence artistName = service.getArtistName();
+        CharSequence titleName = pTrackName;
+        CharSequence artistName = pArtistName;
         CharSequence errorState = null;
 
         // Format title string with track number, or show SD card message
@@ -148,7 +143,6 @@ public class MediaAppWidgetProvider extends AppWidgetProvider {
         }
 
         // Set correct drawable for pause state
-        final boolean playing = service.isPlaying();
         if (playing) {
             views.setImageViewResource(R.id.control_play, R.drawable.ic_appwidget_music_pause);
         } else {

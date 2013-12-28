@@ -52,4 +52,8 @@ final class NullPlayer implements IPlayer {
     @Override
     public void seek(int progress) {
     }
+
+    @Override
+    public void startPlayback() {
+    }
 }

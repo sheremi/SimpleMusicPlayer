@@ -12,5 +12,6 @@ public class PlayerApplication extends Application {
     public void onCreate() {
         Logger.getDefaultLogger().addLogWriter(LogcatLogWriterWithLines.getInstance());
         startService(new Intent(getApplicationContext(), PlayerService.class));
+        // TODO start other services OR register their receivers in manifest
     }
 }

@@ -165,6 +165,11 @@ public class PlayerService extends Service {
             public void seek(int progress) {
                 PlayerService.this.seek(progress);
             }
+
+            @Override
+            public void startPlayback() {
+                startPlayback();
+            }
         });
 
         // TODO setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -383,7 +388,6 @@ public class PlayerService extends Service {
         @Override
         public void onServiceConnected(ComponentName classname, IBinder obj) {
             mService = IMediaPlaybackService.Stub.asInterface(obj);
-            startPlayback();
             try {
                 // Assume something is playing when the service says it is,
                 // but also if the audio ID is valid but the service is paused.
@@ -441,6 +445,7 @@ public class PlayerService extends Service {
 
     private void setPauseButtonImage() {
         try {
+
             if (mService != null && mService.isPlaying()) {
                 // TODO
             } else {
