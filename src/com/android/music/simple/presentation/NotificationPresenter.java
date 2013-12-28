@@ -1,6 +1,9 @@
 package com.android.music.simple.presentation;
 
+import android.app.Service;
 import android.content.Context;
+import android.content.Intent;
+import android.os.IBinder;
 
 /**
  * TODO
@@ -8,7 +11,7 @@ import android.content.Context;
  * @author Yuriy
  * 
  */
-public class NotificationPresenter {
+public class NotificationPresenter extends Service {
     private Context context;
 
     // private void onTrackChanged() {
@@ -45,4 +48,15 @@ public class NotificationPresenter {
     // 0);
     // startForeground(PLAYBACKSERVICE_STATUS, status);
     // }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
 }

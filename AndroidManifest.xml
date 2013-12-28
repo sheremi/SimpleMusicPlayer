@@ -56,6 +56,8 @@
             </intent-filter>
         </receiver>
         <service android:name=".simple.remote.RemoteControlService" android:exported="false" />
+        <service android:name=".simple.presentation.NotificationPresenter" android:exported="false" />
+        <service android:name=".simple.presentation.WidgetPresenter" android:exported="false" />
 
         <!-- ############################################################################## -->
 
