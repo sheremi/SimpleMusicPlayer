@@ -75,7 +75,6 @@
         </receiver>
         <service android:name=".simple.remote.RemoteControlService" android:exported="false" />
         <service android:name=".simple.presentation.NotificationPresenter" android:exported="false" />
-        <service android:name=".simple.presentation.WidgetPresenter" android:exported="false" />
 
         <!-- ############################################################################## -->
 
@@ -279,7 +278,7 @@
         <service android:name="com.android.music.MediaPlaybackService"
             android:exported="false" />
 
-        <receiver android:name="com.android.music.MediaAppWidgetProvider">
+        <receiver android:name="com.android.music.simple.presentation.MediaAppWidgetProvider">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
